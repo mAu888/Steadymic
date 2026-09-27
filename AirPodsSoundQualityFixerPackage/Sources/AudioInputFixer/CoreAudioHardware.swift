@@ -108,7 +108,7 @@ public struct CoreAudioHardware: AudioHardware {
     private static var handlers: [Int: @MainActor () -> Void] = [:]
     private static var nextKey = 1
 
-    static var count: Int { handlers.count }
+    static var keys: Set<Int> { Set(handlers.keys) }
 
     static func add(_ handler: @escaping @MainActor () -> Void) -> Int {
       defer { nextKey += 1 }

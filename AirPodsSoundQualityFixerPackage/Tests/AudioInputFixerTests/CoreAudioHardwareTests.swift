@@ -6,10 +6,14 @@ import Testing
 @MainActor
 struct CoreAudioHardwareTests {
   @Test func releasingObservationRemovesHandler() async {
-    let initialCount = CoreAudioHardware.ListenerRegistry.count
+    // Only this observation's key is asserted, since tests in other suites run in parallel and can
+    // add and remove their own registry entries.
+    let keysBefore = CoreAudioHardware.ListenerRegistry.keys
+    let addedKeys: Set<Int>
     do {
       let observation = CoreAudioHardware().observeChanges {}
-      expectNoDifference(CoreAudioHardware.ListenerRegistry.count, initialCount + 1)
+      addedKeys = CoreAudioHardware.ListenerRegistry.keys.subtracting(keysBefore)
+      expectNoDifference(addedKeys.count, 1)
       withExtendedLifetime(observation) {}
     }
 
@@ -17,6 +21,6 @@ struct CoreAudioHardwareTests {
       DispatchQueue.main.async { continuation.resume() }
     }
 
-    expectNoDifference(CoreAudioHardware.ListenerRegistry.count, initialCount)
+    expectNoDifference(CoreAudioHardware.ListenerRegistry.keys.isDisjoint(with: addedKeys), true)
   }
 }
