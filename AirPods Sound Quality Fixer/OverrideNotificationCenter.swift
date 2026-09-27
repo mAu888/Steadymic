@@ -1,5 +1,6 @@
 import AudioInputFixer
 import UserNotifications
+import os
 
 /// Presents a system notification when the fixer switches the input back after the user picked a
 /// different one from the sound menu, with actions to undo that switch or pause the fixer.
@@ -20,7 +21,13 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     self.fixer = fixer
     super.init()
     center.delegate = self
-    center.requestAuthorization(options: [.alert]) { _, _ in }
+    center.requestAuthorization(options: [.alert]) { granted, error in
+      if let error {
+        Logger().error("Notification authorization request failed: \(error.localizedDescription)")
+      } else if !granted {
+        Logger().error("Notification authorization was denied")
+      }
+    }
     center.setNotificationCategories([
       UNNotificationCategory(
         identifier: Action.category,
@@ -41,7 +48,22 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
       + "\"Set as Forced Input\" makes \(selectedDevice.name) the new pinned input instead."
     content.categoryIdentifier = Action.category
     content.userInfo = [Self.selectedDeviceUIDKey: selectedDevice.uid]
-    center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+    post(content)
+  }
+
+  private func notifyDeviceUnavailable() {
+    let content = UNMutableNotificationContent()
+    content.title = "Device No Longer Available"
+    content.body = "The input you selected is no longer connected, so it could not be set as the forced input."
+    post(content)
+  }
+
+  private func post(_ content: UNNotificationContent) {
+    center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)) { error in
+      if let error {
+        Logger().error("Could not present notification: \(error.localizedDescription)")
+      }
+    }
   }
 
   // Without this, UNUserNotificationCenter suppresses the alert whenever the app is foreground,
@@ -61,6 +83,9 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
   ) {
     let actionIdentifier = response.actionIdentifier
     let selectedDeviceUID = response.notification.request.content.userInfo[Self.selectedDeviceUIDKey] as? String
+    // completionHandler signals that notification processing/teardown is done, not that the action's
+    // side effect has run, so it can be called immediately; the module's default main-actor isolation
+    // makes waiting for `handle` to finish before calling it a data-race risk the compiler rejects.
     Task { @MainActor [self] in
       handle(actionIdentifier: actionIdentifier, selectedDeviceUID: selectedDeviceUID)
     }
@@ -73,6 +98,8 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     case Action.setAsForcedInput:
       if let selectedDeviceUID, let device = fixer.devices.first(where: { $0.uid == selectedDeviceUID }) {
         fixer.select(device)
+      } else {
+        notifyDeviceUnavailable()
       }
     case Action.pause:
       fixer.isPaused = true

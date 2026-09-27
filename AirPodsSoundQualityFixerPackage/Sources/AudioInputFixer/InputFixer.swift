@@ -68,9 +68,12 @@ public final class InputFixer {
   private func notifyOverrideIfNeeded(
     forcedDevice: AudioDevice, before: (deviceUIDs: Set<String>, defaultUID: String?)?
   ) {
-    guard
-      let before, before.deviceUIDs == Set(devices.map(\.uid)),
-      let previousDefaultUID = before.defaultUID, previousDefaultUID != forcedDevice.uid,
+    guard let before, before.deviceUIDs == Set(devices.map(\.uid)) else { return }
+    guard let previousDefaultUID = before.defaultUID else {
+      Logger().error("Could not determine the previous default input to report an override")
+      return
+    }
+    guard previousDefaultUID != forcedDevice.uid,
       let selectedDevice = devices.first(where: { $0.uid == previousDefaultUID })
     else { return }
     notifier?.notifyOverride(selectedDevice: selectedDevice, forcedDevice: forcedDevice)
