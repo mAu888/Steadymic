@@ -102,6 +102,47 @@ struct InputFixerTests {
     expectNoDifference(hardware.setDefaultInputCalls, [])
   }
 
+  @Test func notifiesWhenSoundMenuSelectionIsOverridden() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    let notifier = FakeOverrideNotifier()
+    fixer.notifier = notifier
+    fixer.start()
+
+    hardware.defaultInput = AudioDevice.airPods.id
+    hardware.simulateChange()
+
+    expectNoDifference(notifier.overrides.map(\.selectedDevice), [.airPods])
+    expectNoDifference(notifier.overrides.map(\.forcedDevice), [.builtIn])
+  }
+
+  @Test func doesNotNotifyOnInitialLaunchMismatch() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.airPods.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    let notifier = FakeOverrideNotifier()
+    fixer.notifier = notifier
+
+    fixer.start()
+
+    expectNoDifference(notifier.overrides.isEmpty, true)
+  }
+
+  @Test func doesNotNotifyWhenDeviceListAlsoChanged() {
+    let hardware = FakeAudioHardware(devices: [.builtIn], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.select(.interface)
+    let notifier = FakeOverrideNotifier()
+    fixer.notifier = notifier
+    fixer.start()
+
+    hardware.devices = [.builtIn, .airPods, .interface]
+    hardware.defaultInput = AudioDevice.airPods.id
+    hardware.simulateChange()
+
+    expectNoDifference(fixer.forcedDevice, .interface)
+    expectNoDifference(notifier.overrides.isEmpty, true)
+  }
+
   @Test func reportsDeviceThatCannotBecomeDefaultInput() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.airPods.id)
     hardware.rejectedDeviceIDs = [AudioDevice.interface.id]

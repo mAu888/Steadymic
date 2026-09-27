@@ -19,6 +19,8 @@ public final class InputFixer {
   @ObservationIgnored private let hardware: any AudioHardware
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private var observation: AudioHardwareObservation?
+  /// Set after construction, once the app has something able to present a notification.
+  @ObservationIgnored public var notifier: (any OverrideNotifier)?
 
   public init(hardware: any AudioHardware, defaults: UserDefaults = .standard) {
     self.hardware = hardware
@@ -26,7 +28,7 @@ public final class InputFixer {
   }
 
   public func start() {
-    observation = hardware.observeChanges { [weak self] in self?.refresh() }
+    observation = hardware.observeChanges { [weak self] in self?.handleExternalChange() }
     refresh()
   }
 
@@ -35,7 +37,13 @@ public final class InputFixer {
     refresh()
   }
 
-  private func refresh() {
+  /// Snapshots the device list and default before recomputing, so `refresh` can tell a genuine
+  /// sound-menu reselection (default changed, device list didn't) from a device connect/disconnect.
+  private func handleExternalChange() {
+    refresh(before: (deviceIDs: Set(devices.map(\.id)), defaultID: hardware.defaultInputDeviceID()))
+  }
+
+  private func refresh(before: (deviceIDs: Set<AudioDeviceID>, defaultID: AudioDeviceID?)? = nil) {
     devices = hardware.inputDevices()
     forcedDevice = Self.deviceToForce(
       in: devices, preferredUID: defaults.string(forKey: Keys.forcedDeviceUID)
@@ -46,10 +54,22 @@ public final class InputFixer {
     }
     if hardware.setDefaultInputDevice(forcedDevice.id) {
       failedDevice = nil
+      notifyOverrideIfNeeded(forcedDevice: forcedDevice, before: before)
     } else {
       failedDevice = forcedDevice
       Logger().error("Could not make \(forcedDevice.name) the default input")
     }
+  }
+
+  private func notifyOverrideIfNeeded(
+    forcedDevice: AudioDevice, before: (deviceIDs: Set<AudioDeviceID>, defaultID: AudioDeviceID?)?
+  ) {
+    guard
+      let before, before.deviceIDs == Set(devices.map(\.id)),
+      let previousDefaultID = before.defaultID, previousDefaultID != forcedDevice.id,
+      let selectedDevice = devices.first(where: { $0.id == previousDefaultID })
+    else { return }
+    notifier?.notifyOverride(selectedDevice: selectedDevice, forcedDevice: forcedDevice)
   }
 
   static func deviceToForce(in devices: [AudioDevice], preferredUID: String?) -> AudioDevice? {
