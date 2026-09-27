@@ -5,13 +5,14 @@ struct MenuContent: View {
   @Bindable var fixer: InputFixer
   @Binding var isIconVisible: Bool
   @Environment(\.openURL) private var openURL
+  @Environment(\.openWindow) private var openWindow
 
   var body: some View {
     Text(Self.version)
     Divider()
     Toggle("Pause", isOn: $fixer.isPaused)
     Divider()
-    Picker("Forced input:", selection: forcedDeviceUID) {
+    Picker("Force input:", selection: forcedDeviceUID) {
       ForEach(fixer.devices) { device in
         Text(device.name).tag(Optional(device.uid))
       }
@@ -19,6 +20,9 @@ struct MenuContent: View {
     .pickerStyle(.inline)
     if let failedDevice = fixer.failedDevice {
       Text("Could not switch the input to \(failedDevice.name)")
+    }
+    Toggle(isOn: advancedIsActive) {
+      Text("Advanced…")
     }
     Divider()
     LaunchAtLoginToggle()
@@ -39,13 +43,26 @@ struct MenuContent: View {
     }
   }
 
+  /// Shows a checkmark on the forced device only while priority is unambiguous — a single device,
+  /// or none configured, falling back to the built-in microphone. `Advanced…` carries the checkmark
+  /// once more than one device is configured, since no single row could represent an ordered list.
   private var forcedDeviceUID: Binding<String?> {
     Binding {
-      fixer.forcedDevice?.uid
+      fixer.priorityUIDs.count > 1 ? nil : fixer.forcedDevice?.uid
     } set: { uid in
       if let uid {
         fixer.select(uid: uid)
       }
+    }
+  }
+
+  private var advancedIsActive: Binding<Bool> {
+    Binding {
+      fixer.priorityUIDs.count > 1
+    } set: { _ in
+      // The user's tap always opens the editor; it never sets this checkmark directly.
+      NSApp.activate()
+      openWindow(id: WindowIDs.advancedPriority)
     }
   }
 

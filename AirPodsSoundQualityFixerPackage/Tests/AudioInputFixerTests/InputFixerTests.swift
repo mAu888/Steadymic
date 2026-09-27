@@ -58,6 +58,29 @@ struct InputFixerTests {
     expectNoDifference(relaunched.forcedDevice, .interface)
   }
 
+  @Test func appendToPriorityAddsDeviceAsLeastPreferred() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.interface.uid)
+
+    expectNoDifference(fixer.appendToPriority(uid: AudioDevice.builtIn.uid), true)
+
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+    expectNoDifference(fixer.forcedDevice, .interface)
+  }
+
+  @Test func appendToPriorityRejectsDisconnectedOrDuplicateDevice() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.builtIn.uid)
+
+    expectNoDifference(fixer.appendToPriority(uid: AudioDevice.interface.uid), false)
+    expectNoDifference(fixer.appendToPriority(uid: AudioDevice.builtIn.uid), false)
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.builtIn.uid])
+  }
+
   @Test func rejectsSelectingDisconnectedDevice() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
@@ -158,6 +181,44 @@ struct InputFixerTests {
 
     expectNoDifference(fixer.forcedDevice, .interface)
     expectNoDifference(notifier.overrides.isEmpty, true)
+  }
+
+  @Test func fallsBackThroughPriorityOrderRatherThanStraightToBuiltIn() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.builtIn.uid)
+    fixer.select(uid: AudioDevice.interface.uid)
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+
+    hardware.devices = [.airPods, .builtIn]
+    hardware.simulateChange()
+
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+  }
+
+  @Test func removeFromPriorityDropsDeviceFromTheFallbackOrder() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.builtIn.uid)
+    fixer.select(uid: AudioDevice.interface.uid)
+
+    fixer.removeFromPriority(uid: AudioDevice.interface.uid)
+
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.builtIn.uid])
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+  }
+
+  @Test func migratesLegacySingleDevicePreferenceIntoPriorityList() {
+    defaults.set(AudioDevice.interface.uid, forKey: "ForcedDeviceUID")
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid])
+    expectNoDifference(fixer.forcedDevice, .interface)
   }
 
   @Test func reportsDeviceThatCannotBecomeDefaultInput() {

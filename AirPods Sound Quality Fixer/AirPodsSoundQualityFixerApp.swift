@@ -26,6 +26,11 @@ struct AirPodsSoundQualityFixerApp: App {
       Image(.menuBarIcon)
         .help("AirPods Audio Quality & Battery Life Fixer")
     }
+
+    Window("Preferred Input Devices", id: WindowIDs.advancedPriority) {
+      AdvancedPriorityView(fixer: fixer)
+    }
+    .windowResizability(.contentSize)
   }
 }
 
