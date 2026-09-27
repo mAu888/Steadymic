@@ -1,10 +1,12 @@
+import AppKit
 import AudioInputFixer
 import SwiftUI
 
 @main
 struct AirPodsSoundQualityFixerApp: App {
+  @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
   @State private var fixer: InputFixer
-  @State private var isIconVisible = true
+  @AppStorage(DefaultsKeys.isIconVisible) private var isIconVisible = true
   // Kept alive here: UNUserNotificationCenter.delegate does not retain its delegate.
   private let overrideNotificationCenter: OverrideNotificationCenter
 
@@ -24,5 +26,18 @@ struct AirPodsSoundQualityFixerApp: App {
       Image(.menuBarIcon)
         .help("AirPods Audio Quality & Battery Life Fixer")
     }
+  }
+}
+
+enum DefaultsKeys {
+  static let isIconVisible = "IsIconVisible"
+}
+
+final class AppDelegate: NSObject, NSApplicationDelegate {
+  /// Opening the app from Finder, Spotlight, or Launchpad while it runs is the only way to show a
+  /// hidden menu bar icon again, since the app has no Dock icon or window.
+  func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+    UserDefaults.standard.set(true, forKey: DefaultsKeys.isIconVisible)
+    return false
   }
 }

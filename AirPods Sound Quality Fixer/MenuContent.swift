@@ -30,7 +30,9 @@ struct MenuContent: View {
       openURL(URL(string: "https://github.com/mAu888/airpodssoundqualityfixer/releases")!)
     }
     Button("Hide") {
-      isIconVisible = false
+      if Self.confirmHide() {
+        isIconVisible = false
+      }
     }
     Button("Quit") {
       NSApplication.shared.terminate(nil)
@@ -45,6 +47,20 @@ struct MenuContent: View {
         fixer.select(device)
       }
     }
+  }
+
+  private static func confirmHide() -> Bool {
+    let alert = NSAlert()
+    alert.messageText = "Hide the Menu Bar Icon?"
+    alert.informativeText =
+      "The fixer keeps running. To show the icon again, open AirPods Sound Quality Fixer from the "
+      + "Applications folder."
+    alert.addButton(withTitle: "Hide")
+    alert.addButton(withTitle: "Cancel")
+    // An app with no Dock icon stays inactive while its menu is open, so without activation the
+    // alert cannot become key and does not receive Return or Escape.
+    NSApp.activate()
+    return alert.runModal() == .alertFirstButtonReturn
   }
 
   private static let version: String = {
