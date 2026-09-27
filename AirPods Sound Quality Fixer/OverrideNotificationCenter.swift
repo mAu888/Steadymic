@@ -44,6 +44,16 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
   }
 
+  // Without this, UNUserNotificationCenter suppresses the alert whenever the app is foreground,
+  // which for a menu-bar app includes whenever its own menu is open.
+  nonisolated func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .sound])
+  }
+
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,

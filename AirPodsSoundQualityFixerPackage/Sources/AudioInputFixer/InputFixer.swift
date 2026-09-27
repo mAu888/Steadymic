@@ -37,13 +37,17 @@ public final class InputFixer {
     refresh()
   }
 
-  /// Snapshots the device list and default before recomputing, so `refresh` can tell a genuine
-  /// sound-menu reselection (default changed, device list didn't) from a device connect/disconnect.
+  /// Snapshots the device list and default (by UID, stable across reconnects unlike `AudioDeviceID`)
+  /// before recomputing, so `refresh` can tell a genuine sound-menu reselection (default changed,
+  /// device list didn't) from a device connect/disconnect.
   private func handleExternalChange() {
-    refresh(before: (deviceIDs: Set(devices.map(\.id)), defaultID: hardware.defaultInputDeviceID()))
+    let previousDefaultUID = hardware.defaultInputDeviceID().flatMap { id in
+      devices.first(where: { $0.id == id })?.uid
+    }
+    refresh(before: (deviceUIDs: Set(devices.map(\.uid)), defaultUID: previousDefaultUID))
   }
 
-  private func refresh(before: (deviceIDs: Set<AudioDeviceID>, defaultID: AudioDeviceID?)? = nil) {
+  private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
     devices = hardware.inputDevices()
     forcedDevice = Self.deviceToForce(
       in: devices, preferredUID: defaults.string(forKey: Keys.forcedDeviceUID)
@@ -62,12 +66,12 @@ public final class InputFixer {
   }
 
   private func notifyOverrideIfNeeded(
-    forcedDevice: AudioDevice, before: (deviceIDs: Set<AudioDeviceID>, defaultID: AudioDeviceID?)?
+    forcedDevice: AudioDevice, before: (deviceUIDs: Set<String>, defaultUID: String?)?
   ) {
     guard
-      let before, before.deviceIDs == Set(devices.map(\.id)),
-      let previousDefaultID = before.defaultID, previousDefaultID != forcedDevice.id,
-      let selectedDevice = devices.first(where: { $0.id == previousDefaultID })
+      let before, before.deviceUIDs == Set(devices.map(\.uid)),
+      let previousDefaultUID = before.defaultUID, previousDefaultUID != forcedDevice.uid,
+      let selectedDevice = devices.first(where: { $0.uid == previousDefaultUID })
     else { return }
     notifier?.notifyOverride(selectedDevice: selectedDevice, forcedDevice: forcedDevice)
   }
