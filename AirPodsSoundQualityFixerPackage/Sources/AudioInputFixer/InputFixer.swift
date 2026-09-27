@@ -3,6 +3,8 @@ import Foundation
 import Observation
 import os
 
+private let logger = Logger(subsystem: "com.milgra.asqf", category: "InputFixer")
+
 /// Keeps the system default input on the preferred device, or on the built-in microphone when no
 /// preferred device is connected, so that AirPods stay in their high-quality output mode.
 @MainActor
@@ -61,7 +63,7 @@ public final class InputFixer {
       notifyOverrideIfNeeded(forcedDevice: forcedDevice, before: before)
     } else {
       failedDevice = forcedDevice
-      Logger().error("Could not make \(forcedDevice.name) the default input")
+      logger.error("Could not make \(forcedDevice.name) the default input")
     }
   }
 
@@ -70,7 +72,7 @@ public final class InputFixer {
   ) {
     guard let before, before.deviceUIDs == Set(devices.map(\.uid)) else { return }
     guard let previousDefaultUID = before.defaultUID else {
-      Logger().error("Could not determine the previous default input to report an override")
+      logger.error("Could not determine the previous default input to report an override")
       return
     }
     guard previousDefaultUID != forcedDevice.uid,

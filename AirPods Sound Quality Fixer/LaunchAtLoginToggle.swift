@@ -2,6 +2,8 @@ import ServiceManagement
 import SwiftUI
 import os
 
+private let logger = Logger(subsystem: "com.milgra.asqf", category: "LaunchAtLoginToggle")
+
 struct LaunchAtLoginToggle: View {
   @State private var isEnabled = Self.isRegistered
 
@@ -23,7 +25,7 @@ struct LaunchAtLoginToggle: View {
         try service.unregister()
       }
     } catch {
-      Logger().error("Updating login item failed: \(error)")
+      logger.error("Updating login item failed: \(error)")
     }
     if service.status == .requiresApproval {
       SMAppService.openSystemSettingsLoginItems()

@@ -2,6 +2,8 @@ import AudioInputFixer
 import UserNotifications
 import os
 
+private let logger = Logger(subsystem: "com.milgra.asqf", category: "OverrideNotificationCenter")
+
 /// Presents a system notification when the fixer switches the input back after the user picked a
 /// different one from the sound menu, with actions to undo that switch or pause the fixer.
 @MainActor
@@ -23,9 +25,9 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     center.delegate = self
     center.requestAuthorization(options: [.alert]) { granted, error in
       if let error {
-        Logger().error("Notification authorization request failed: \(error.localizedDescription)")
+        logger.error("Notification authorization request failed: \(error.localizedDescription)")
       } else if !granted {
-        Logger().error("Notification authorization was denied")
+        logger.error("Notification authorization was denied")
       }
     }
     center.setNotificationCategories([
@@ -61,7 +63,7 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
   private func post(_ content: UNNotificationContent) {
     center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)) { error in
       if let error {
-        Logger().error("Could not present notification: \(error.localizedDescription)")
+        logger.error("Could not present notification: \(error.localizedDescription)")
       }
     }
   }
