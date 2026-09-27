@@ -43,10 +43,10 @@ public final class InputFixer {
   /// before recomputing, so `refresh` can tell a genuine sound-menu reselection (default changed,
   /// device list didn't) from a device connect/disconnect.
   private func handleExternalChange() {
-    let previousDefaultUID = hardware.defaultInputDeviceID().flatMap { id in
+    let selectedDefaultUID = hardware.defaultInputDeviceID().flatMap { id in
       devices.first(where: { $0.id == id })?.uid
     }
-    refresh(before: (deviceUIDs: Set(devices.map(\.uid)), defaultUID: previousDefaultUID))
+    refresh(before: (deviceUIDs: Set(devices.map(\.uid)), defaultUID: selectedDefaultUID))
   }
 
   private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
@@ -63,7 +63,7 @@ public final class InputFixer {
       notifyOverrideIfNeeded(forcedDevice: forcedDevice, before: before)
     } else {
       failedDevice = forcedDevice
-      logger.error("Could not make \(forcedDevice.name) the default input")
+      logger.error("Could not make \(forcedDevice.name, privacy: .public) the default input")
     }
   }
 
@@ -71,12 +71,12 @@ public final class InputFixer {
     forcedDevice: AudioDevice, before: (deviceUIDs: Set<String>, defaultUID: String?)?
   ) {
     guard let before, before.deviceUIDs == Set(devices.map(\.uid)) else { return }
-    guard let previousDefaultUID = before.defaultUID else {
-      logger.error("Could not determine the previous default input to report an override")
+    guard let selectedDefaultUID = before.defaultUID else {
+      logger.error("Could not determine the selected default input to report an override")
       return
     }
-    guard previousDefaultUID != forcedDevice.uid,
-      let selectedDevice = devices.first(where: { $0.uid == previousDefaultUID })
+    guard selectedDefaultUID != forcedDevice.uid,
+      let selectedDevice = devices.first(where: { $0.uid == selectedDefaultUID })
     else { return }
     notifier?.notifyOverride(selectedDevice: selectedDevice, forcedDevice: forcedDevice)
   }

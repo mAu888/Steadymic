@@ -25,7 +25,7 @@ struct LaunchAtLoginToggle: View {
         try service.unregister()
       }
     } catch {
-      logger.error("Updating login item failed: \(error)")
+      logger.error("Updating login item failed: \(error, privacy: .public)")
     }
     if service.status == .requiresApproval {
       SMAppService.openSystemSettingsLoginItems()
