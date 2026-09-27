@@ -98,10 +98,9 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     guard let fixer else { return }
     switch actionIdentifier {
     case Action.setAsForcedInput:
-      if let selectedDeviceUID, let device = fixer.devices.first(where: { $0.uid == selectedDeviceUID }) {
-        fixer.select(device)
-      } else {
+      guard let selectedDeviceUID, fixer.select(uid: selectedDeviceUID) else {
         notifyDeviceUnavailable()
+        return
       }
     case Action.pause:
       fixer.isPaused = true

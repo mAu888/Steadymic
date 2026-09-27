@@ -34,9 +34,14 @@ public final class InputFixer {
     refresh()
   }
 
-  public func select(_ device: AudioDevice) {
-    defaults.set(device.uid, forKey: Keys.forcedDeviceUID)
+  /// Makes the connected input device with `uid` the forced input, persisted across launches.
+  /// Returns `false` and keeps the current preference when no connected input device has `uid`.
+  @discardableResult
+  public func select(uid: String) -> Bool {
+    guard devices.contains(where: { $0.uid == uid }) else { return false }
+    defaults.set(uid, forKey: Keys.forcedDeviceUID)
     refresh()
+    return true
   }
 
   /// Snapshots the device list and default (by UID, stable across reconnects unlike `AudioDeviceID`)

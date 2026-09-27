@@ -43,8 +43,8 @@ struct MenuContent: View {
     Binding {
       fixer.forcedDevice?.uid
     } set: { uid in
-      if let device = fixer.devices.first(where: { $0.uid == uid }) {
-        fixer.select(device)
+      if let uid {
+        fixer.select(uid: uid)
       }
     }
   }

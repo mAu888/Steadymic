@@ -48,7 +48,7 @@ struct InputFixerTests {
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
 
-    fixer.select(.interface)
+    expectNoDifference(fixer.select(uid: AudioDevice.interface.uid), true)
 
     expectNoDifference(fixer.forcedDevice, .interface)
     expectNoDifference(hardware.setDefaultInputCalls, [AudioDevice.interface.id])
@@ -58,11 +58,25 @@ struct InputFixerTests {
     expectNoDifference(relaunched.forcedDevice, .interface)
   }
 
+  @Test func rejectsSelectingDisconnectedDevice() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+
+    expectNoDifference(fixer.select(uid: AudioDevice.interface.uid), false)
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+
+    hardware.devices = [.airPods, .builtIn, .interface]
+    hardware.simulateChange()
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+    expectNoDifference(hardware.setDefaultInputCalls, [])
+  }
+
   @Test func fallsBackToBuiltInWhilePreferredDeviceIsDisconnected() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
-    fixer.select(.interface)
+    fixer.select(uid: AudioDevice.interface.uid)
 
     hardware.devices = [.airPods, .builtIn]
     hardware.defaultInput = AudioDevice.airPods.id
@@ -128,12 +142,15 @@ struct InputFixerTests {
   }
 
   @Test func doesNotNotifyWhenDeviceListAlsoChanged() {
-    let hardware = FakeAudioHardware(devices: [.builtIn], defaultInput: AudioDevice.builtIn.id)
+    let hardware = FakeAudioHardware(devices: [.builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
-    fixer.select(.interface)
+    fixer.start()
+    fixer.select(uid: AudioDevice.interface.uid)
+    hardware.devices = [.builtIn]
+    hardware.defaultInput = AudioDevice.builtIn.id
+    hardware.simulateChange()
     let notifier = FakeOverrideNotifier()
     fixer.notifier = notifier
-    fixer.start()
 
     hardware.devices = [.builtIn, .airPods, .interface]
     hardware.defaultInput = AudioDevice.airPods.id
@@ -150,11 +167,11 @@ struct InputFixerTests {
     fixer.start()
     expectNoDifference(fixer.failedDevice, nil)
 
-    fixer.select(.interface)
+    fixer.select(uid: AudioDevice.interface.uid)
     expectNoDifference(fixer.failedDevice, .interface)
     expectNoDifference(hardware.defaultInput, AudioDevice.builtIn.id)
 
-    fixer.select(.builtIn)
+    fixer.select(uid: AudioDevice.builtIn.uid)
     expectNoDifference(fixer.failedDevice, nil)
   }
 }
