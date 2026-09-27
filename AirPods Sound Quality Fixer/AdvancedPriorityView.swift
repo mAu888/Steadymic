@@ -28,6 +28,8 @@ struct AdvancedPriorityView: View {
           // change across reconnects and would desync row identity from the selection above.
           ForEach(priorityDevices, id: \.uid) { device in
             Text(device.name)
+              // Without this, only the text's glyph bounds are hit-tested, not the full row width.
+              .contentShape(Rectangle())
           }
           .onMove { indices, newOffset in
             var uids = priorityDevices.map(\.uid)
@@ -66,6 +68,7 @@ struct AdvancedPriorityView: View {
       } label: {
         Image(systemName: "plus")
           .frame(width: 24, height: 16)
+          .contentShape(Rectangle())
       }
       .menuStyle(.borderlessButton)
       .menuIndicator(.hidden)
@@ -79,6 +82,7 @@ struct AdvancedPriorityView: View {
       } label: {
         Image(systemName: "minus")
           .frame(width: 24, height: 16)
+          .contentShape(Rectangle())
       }
       .buttonStyle(.plain)
       .disabled(selection.isEmpty)
