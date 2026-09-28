@@ -7,7 +7,7 @@ You can pick the forced input device, or define an ordered fallback chain of pre
 
 The app runs in the menu bar.
 
-Download the compiled application from [releases](https://github.com/milgra/airpodssoundqualityfixer/releases/tag/1.0)
+Download the compiled application from [releases](https://github.com/mAu888/Steadymic/releases).
 
 ## Building
 

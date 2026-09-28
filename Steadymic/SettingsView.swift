@@ -13,7 +13,7 @@ struct SettingsView: View {
           VStack(alignment: .trailing) {
             Text(Self.version)
             Button("Check for updates") {
-              openURL(URL(string: "https://github.com/mAu888/airpodssoundqualityfixer/releases")!)
+              openURL(URL(string: "https://github.com/mAu888/Steadymic/releases")!)
             }
           }
         }
