@@ -5,9 +5,9 @@ import os
 
 private let logger = Logger(subsystem: "com.milgra.asqf", category: "InputFixer")
 
-/// Keeps the system default input on the highest-priority connected device, or on the built-in
-/// microphone when none of the preferred devices are connected, so that AirPods stay in their
-/// high-quality output mode.
+/// Keeps the system default input on the user's fixed device, or on the highest-priority connected
+/// device of the fallback chain while that is enabled, and otherwise on the built-in microphone, so
+/// that AirPods stay in their high-quality output mode.
 @MainActor
 @Observable
 public final class InputFixer {
@@ -15,10 +15,18 @@ public final class InputFixer {
   public private(set) var forcedDevice: AudioDevice?
   /// The device the last forcing attempt could not make the default input.
   public private(set) var failedDevice: AudioDevice?
-  /// User's preferred devices, most preferred first. `select` moves a device to the front; devices
-  /// not in this list, and the built-in microphone as an implicit last resort, are never chosen
-  /// over a connected entry that is.
+  /// The single device `select` fixes the input to while the fallback chain is disabled.
+  public private(set) var fixedUID: String?
+  /// The fallback chain, most preferred first. Kept while the chain is disabled, so that the user
+  /// can switch between a fixed device and the chain without reconfiguring it.
   public private(set) var priorityUIDs: [String]
+  /// Whether the fixer forces from `priorityUIDs` instead of `fixedUID`.
+  public var isPriorityEnabled: Bool {
+    didSet {
+      defaults.set(isPriorityEnabled, forKey: Keys.isPriorityEnabled)
+      refresh()
+    }
+  }
   public var isPaused = false {
     didSet { refresh() }
   }
@@ -32,13 +40,16 @@ public final class InputFixer {
   public init(hardware: any AudioHardware, defaults: UserDefaults = .standard) {
     self.hardware = hardware
     self.defaults = defaults
-    // Migrate the single-device preference an earlier version persisted into a one-entry list.
-    if let list = defaults.array(forKey: Keys.priorityUIDs) as? [String] {
-      priorityUIDs = list
-    } else if let legacyUID = defaults.string(forKey: Keys.legacyForcedDeviceUID) {
-      priorityUIDs = [legacyUID]
+    let priorityUIDs = defaults.array(forKey: Keys.priorityUIDs) as? [String] ?? []
+    self.priorityUIDs = priorityUIDs
+    if let isPriorityEnabled = defaults.object(forKey: Keys.isPriorityEnabled) as? Bool {
+      fixedUID = defaults.string(forKey: Keys.fixedUID)
+      self.isPriorityEnabled = isPriorityEnabled
     } else {
-      priorityUIDs = []
+      // Builds that predate the enabled flag always forced from the chain, and left `fixedUID`
+      // stale once it existed. A one-entry chain carries over as the fixed device.
+      fixedUID = priorityUIDs.count == 1 ? priorityUIDs[0] : defaults.string(forKey: Keys.fixedUID)
+      isPriorityEnabled = priorityUIDs.count > 1
     }
   }
 
@@ -47,16 +58,19 @@ public final class InputFixer {
     refresh()
   }
 
-  /// Makes the connected input device with `uid` the most preferred input, persisted across
-  /// launches. Returns `false` and keeps the current preference when no connected input device
-  /// has `uid`.
+  /// Fixes the input to the connected input device with `uid` and disables the fallback chain,
+  /// persisted across launches. Returns `false` and keeps the current preference when no connected
+  /// input device has `uid`.
   @discardableResult
   public func select(uid: String) -> Bool {
     guard devices.contains(where: { $0.uid == uid }) else { return false }
-    var uids = priorityUIDs
-    uids.removeAll { $0 == uid }
-    uids.insert(uid, at: 0)
-    setPriority(uids)
+    fixedUID = uid
+    defaults.set(uid, forKey: Keys.fixedUID)
+    if isPriorityEnabled {
+      isPriorityEnabled = false
+    } else {
+      refresh()
+    }
     return true
   }
 
@@ -74,8 +88,7 @@ public final class InputFixer {
     return true
   }
 
-  /// Replaces the whole priority order, most preferred first, persisted across launches. Used by
-  /// UI that lets the user reorder the list directly rather than only promote one device.
+  /// Replaces the whole priority order, most preferred first, persisted across launches.
   public func setPriority(_ uids: [String]) {
     priorityUIDs = uids
     defaults.set(uids, forKey: Keys.priorityUIDs)
@@ -94,7 +107,7 @@ public final class InputFixer {
 
   private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
     devices = hardware.inputDevices()
-    forcedDevice = Self.deviceToForce(in: devices, priorityUIDs: priorityUIDs)
+    forcedDevice = Self.deviceToForce(in: devices, preferredUIDs: isPriorityEnabled ? priorityUIDs : fixedUID.map { [$0] } ?? [])
     guard !isPaused, let forcedDevice, hardware.defaultInputDeviceID() != forcedDevice.id else {
       failedDevice = nil
       return
@@ -122,18 +135,18 @@ public final class InputFixer {
     notifier?.notifyOverride(selectedDevice: selectedDevice, forcedDevice: forcedDevice)
   }
 
-  /// Returns the highest-priority connected device, falling back to the built-in microphone, then
-  /// to `nil` when neither is present.
-  static func deviceToForce(in devices: [AudioDevice], priorityUIDs: [String]) -> AudioDevice? {
-    for uid in priorityUIDs {
+  /// Returns the first connected device of `preferredUIDs`, falling back to the built-in microphone,
+  /// then to `nil` when neither is present.
+  static func deviceToForce(in devices: [AudioDevice], preferredUIDs: [String]) -> AudioDevice? {
+    for uid in preferredUIDs {
       if let device = devices.first(where: { $0.uid == uid }) { return device }
     }
     return devices.first(where: \.isBuiltIn)
   }
 
   enum Keys {
+    static let fixedUID = "ForcedDeviceUID"
     static let priorityUIDs = "PriorityDeviceUIDs"
-    /// Single-device preference persisted by versions before the priority list existed.
-    static let legacyForcedDeviceUID = "ForcedDeviceUID"
+    static let isPriorityEnabled = "PriorityEnabled"
   }
 }

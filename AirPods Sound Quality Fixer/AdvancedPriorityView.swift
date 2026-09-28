@@ -5,19 +5,20 @@ enum WindowIDs {
   static let advancedPriority = "advanced-priority"
 }
 
-/// Lets the user configure an ordered list of preferred input devices: the fixer forces the first
-/// connected device in the list, falling back to the built-in microphone when none of them are.
+/// Lets the user enable and configure a fallback chain of input devices: the fixer forces the first
+/// connected device in the chain, falling back to the built-in microphone when none of them are.
 struct AdvancedPriorityView: View {
   @Bindable var fixer: InputFixer
   @State private var selection: Set<String> = []
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text("Preferred input devices")
+      Toggle("Use a fallback chain", isOn: $fixer.isPriorityEnabled)
         .font(.headline)
       Text(
         "The fixer forces the default input to the first connected device below, falling back to "
-          + "the built-in microphone when none of them are connected."
+          + "the built-in microphone when none of them are connected. Choosing a single input from "
+          + "the menu turns the chain off and keeps this list."
       )
       .font(.subheadline)
       .foregroundStyle(.secondary)
@@ -50,7 +51,7 @@ struct AdvancedPriorityView: View {
       // A single device already forced, e.g. the built-in fallback with nothing configured yet,
       // becomes the list's starting point instead of showing an empty list.
       if fixer.priorityUIDs.isEmpty, let forcedDevice = fixer.forcedDevice {
-        fixer.select(uid: forcedDevice.uid)
+        fixer.appendToPriority(uid: forcedDevice.uid)
       }
       selection = selection.filter { uid in priorityDevices.contains { $0.uid == uid } }
     }

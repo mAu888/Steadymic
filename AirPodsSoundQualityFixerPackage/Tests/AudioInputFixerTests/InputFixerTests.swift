@@ -58,11 +58,57 @@ struct InputFixerTests {
     expectNoDifference(relaunched.forcedDevice, .interface)
   }
 
-  @Test func appendToPriorityAddsDeviceAsLeastPreferred() {
+  @Test func selectingAnotherDeviceReplacesTheFixedDevice() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
     fixer.select(uid: AudioDevice.interface.uid)
+
+    fixer.select(uid: AudioDevice.builtIn.uid)
+    hardware.devices = [.airPods, .interface]
+    hardware.simulateChange()
+
+    expectNoDifference(fixer.forcedDevice, nil)
+  }
+
+  @Test func selectingDeviceDisablesButKeepsFallbackChain() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.setPriority([AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+    fixer.isPriorityEnabled = true
+    expectNoDifference(fixer.forcedDevice, .interface)
+
+    fixer.select(uid: AudioDevice.airPods.uid)
+    expectNoDifference(fixer.isPriorityEnabled, false)
+    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+    expectNoDifference(fixer.forcedDevice, .airPods)
+
+    fixer.isPriorityEnabled = true
+    expectNoDifference(fixer.forcedDevice, .interface)
+
+    let relaunched = InputFixer(hardware: hardware, defaults: defaults)
+    relaunched.start()
+    expectNoDifference(relaunched.isPriorityEnabled, true)
+    expectNoDifference(relaunched.fixedUID, AudioDevice.airPods.uid)
+  }
+
+  @Test func ignoresFallbackChainWhileDisabled() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+
+    fixer.setPriority([AudioDevice.interface.uid])
+
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+  }
+
+  @Test func appendToPriorityAddsDeviceAsLeastPreferred() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.isPriorityEnabled = true
+    fixer.appendToPriority(uid: AudioDevice.interface.uid)
 
     expectNoDifference(fixer.appendToPriority(uid: AudioDevice.builtIn.uid), true)
 
@@ -74,7 +120,7 @@ struct InputFixerTests {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
-    fixer.select(uid: AudioDevice.builtIn.uid)
+    fixer.appendToPriority(uid: AudioDevice.builtIn.uid)
 
     expectNoDifference(fixer.appendToPriority(uid: AudioDevice.interface.uid), false)
     expectNoDifference(fixer.appendToPriority(uid: AudioDevice.builtIn.uid), false)
@@ -187,22 +233,21 @@ struct InputFixerTests {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
-    fixer.select(uid: AudioDevice.builtIn.uid)
-    fixer.select(uid: AudioDevice.interface.uid)
-    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+    fixer.setPriority([AudioDevice.interface.uid, AudioDevice.airPods.uid])
+    fixer.isPriorityEnabled = true
 
     hardware.devices = [.airPods, .builtIn]
     hardware.simulateChange()
 
-    expectNoDifference(fixer.forcedDevice, .builtIn)
+    expectNoDifference(fixer.forcedDevice, .airPods)
   }
 
   @Test func removeFromPriorityDropsDeviceFromTheFallbackOrder() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
-    fixer.select(uid: AudioDevice.builtIn.uid)
-    fixer.select(uid: AudioDevice.interface.uid)
+    fixer.setPriority([AudioDevice.interface.uid, AudioDevice.builtIn.uid])
+    fixer.isPriorityEnabled = true
 
     fixer.removeFromPriority(uid: AudioDevice.interface.uid)
 
@@ -210,14 +255,38 @@ struct InputFixerTests {
     expectNoDifference(fixer.forcedDevice, .builtIn)
   }
 
-  @Test func migratesLegacySingleDevicePreferenceIntoPriorityList() {
+  @Test func enablesChainSavedWithMultipleDevicesBeforeTheEnabledFlagExisted() {
+    defaults.set(AudioDevice.airPods.uid, forKey: "ForcedDeviceUID")
+    defaults.set([AudioDevice.interface.uid, AudioDevice.builtIn.uid], forKey: "PriorityDeviceUIDs")
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+
+    expectNoDifference(fixer.isPriorityEnabled, true)
+    expectNoDifference(fixer.forcedDevice, .interface)
+  }
+
+  @Test func fixesOneEntryChainSavedBeforeTheEnabledFlagExisted() {
+    defaults.set(AudioDevice.builtIn.uid, forKey: "ForcedDeviceUID")
+    defaults.set([AudioDevice.interface.uid], forKey: "PriorityDeviceUIDs")
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
+
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+
+    expectNoDifference(fixer.isPriorityEnabled, false)
+    expectNoDifference(fixer.forcedDevice, .interface)
+  }
+
+  @Test func keepsLegacySingleDevicePreference() {
     defaults.set(AudioDevice.interface.uid, forKey: "ForcedDeviceUID")
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.id)
 
     let fixer = InputFixer(hardware: hardware, defaults: defaults)
     fixer.start()
 
-    expectNoDifference(fixer.priorityUIDs, [AudioDevice.interface.uid])
+    expectNoDifference(fixer.isPriorityEnabled, false)
     expectNoDifference(fixer.forcedDevice, .interface)
   }
 

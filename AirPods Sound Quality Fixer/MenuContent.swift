@@ -43,12 +43,11 @@ struct MenuContent: View {
     }
   }
 
-  /// Shows a checkmark on the forced device only while priority is unambiguous — a single device,
-  /// or none configured, falling back to the built-in microphone. `Advanced…` carries the checkmark
-  /// once more than one device is configured, since no single row could represent an ordered list.
+  /// `Advanced…` carries the checkmark instead of a device while the fallback chain is enabled,
+  /// since no single row could represent an ordered list.
   private var forcedDeviceUID: Binding<String?> {
     Binding {
-      fixer.priorityUIDs.count > 1 ? nil : fixer.forcedDevice?.uid
+      fixer.isPriorityEnabled ? nil : fixer.forcedDevice?.uid
     } set: { uid in
       if let uid {
         fixer.select(uid: uid)
@@ -58,7 +57,7 @@ struct MenuContent: View {
 
   private var advancedIsActive: Binding<Bool> {
     Binding {
-      fixer.priorityUIDs.count > 1
+      fixer.isPriorityEnabled
     } set: { _ in
       // The user's tap always opens the editor; it never sets this checkmark directly.
       NSApp.activate()
