@@ -31,6 +31,10 @@ struct AirPodsSoundQualityFixerApp: App {
       AdvancedPriorityView(fixer: fixer)
     }
     .windowResizability(.contentSize)
+
+    Settings {
+      SettingsView()
+    }
   }
 
   private static let activeIcon = menuBarIcon(

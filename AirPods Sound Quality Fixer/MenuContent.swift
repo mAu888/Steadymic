@@ -4,12 +4,10 @@ import SwiftUI
 struct MenuContent: View {
   @Bindable var fixer: InputFixer
   @Binding var isIconVisible: Bool
-  @Environment(\.openURL) private var openURL
   @Environment(\.openWindow) private var openWindow
+  @Environment(\.openSettings) private var openSettings
 
   var body: some View {
-    Text(Self.version)
-    Divider()
     Toggle("Pause", isOn: $fixer.isPaused)
     Divider()
     Picker("Force input:", selection: forcedDeviceUID) {
@@ -25,19 +23,18 @@ struct MenuContent: View {
       Text("Advanced…")
     }
     Divider()
-    LaunchAtLoginToggle()
-    Divider()
-    Button("Donate if you like the app") {
-      openURL(URL(string: "https://paypal.me/milgra")!)
-    }
-    Button("Check for updates") {
-      openURL(URL(string: "https://github.com/mAu888/airpodssoundqualityfixer/releases")!)
-    }
     Button("Hide") {
       if Self.confirmHide() {
         isIconVisible = false
       }
     }
+    Button("Settings…") {
+      // Without activation, the Settings window of an app with no Dock icon opens behind the
+      // frontmost app's windows.
+      NSApp.activate()
+      openSettings()
+    }
+    .keyboardShortcut(",")
     Button("Quit") {
       NSApplication.shared.terminate(nil)
     }
@@ -78,11 +75,4 @@ struct MenuContent: View {
     NSApp.activate()
     return alert.runModal() == .alertFirstButtonReturn
   }
-
-  private static let version: String = {
-    let info = Bundle.main.infoDictionary ?? [:]
-    let shortVersion = info["CFBundleShortVersionString"] as? String ?? "?"
-    let build = info["CFBundleVersion"] as? String ?? "?"
-    return "Version \(shortVersion) (build \(build))"
-  }()
 }
