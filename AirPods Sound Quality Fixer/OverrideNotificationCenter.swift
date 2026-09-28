@@ -72,26 +72,19 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
   // which for a menu-bar app includes whenever its own menu is open.
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification,
-    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-  ) {
-    completionHandler([.banner, .sound])
+    willPresent notification: UNNotification
+  ) async -> UNNotificationPresentationOptions {
+    [.banner, .sound]
   }
 
   nonisolated func userNotificationCenter(
     _ center: UNUserNotificationCenter,
-    didReceive response: UNNotificationResponse,
-    withCompletionHandler completionHandler: @escaping () -> Void
-  ) {
+    didReceive response: UNNotificationResponse
+  ) async {
+    // Only these Sendable values cross to the main actor; UNNotificationResponse is not Sendable.
     let actionIdentifier = response.actionIdentifier
     let selectedDeviceUID = response.notification.request.content.userInfo[Self.selectedDeviceUIDKey] as? String
-    // completionHandler signals that notification processing/teardown is done, not that the action's
-    // side effect has run, so it can be called immediately; the module's default main-actor isolation
-    // makes waiting for `handle` to finish before calling it a data-race risk the compiler rejects.
-    Task { @MainActor [self] in
-      handle(actionIdentifier: actionIdentifier, selectedDeviceUID: selectedDeviceUID)
-    }
-    completionHandler()
+    await handle(actionIdentifier: actionIdentifier, selectedDeviceUID: selectedDeviceUID)
   }
 
   private func handle(actionIdentifier: String, selectedDeviceUID: String?) {
