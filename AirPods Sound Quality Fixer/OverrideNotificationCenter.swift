@@ -17,7 +17,7 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     static let pause = "PAUSE_FIXER"
   }
 
-  private nonisolated static let selectedDeviceUIDKey = "selectedDeviceUID"
+  private static let selectedDeviceUIDKey = "selectedDeviceUID"
 
   init(fixer: InputFixer) {
     self.fixer = fixer
@@ -70,27 +70,21 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
 
   // Without this, UNUserNotificationCenter suppresses the alert whenever the app is foreground,
   // which for a menu-bar app includes whenever its own menu is open.
-  nonisolated func userNotificationCenter(
+  func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     willPresent notification: UNNotification
   ) async -> UNNotificationPresentationOptions {
     [.banner, .sound]
   }
 
-  nonisolated func userNotificationCenter(
+  func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse
   ) async {
-    // Only these Sendable values cross to the main actor; UNNotificationResponse is not Sendable.
-    let actionIdentifier = response.actionIdentifier
-    let selectedDeviceUID = response.notification.request.content.userInfo[Self.selectedDeviceUIDKey] as? String
-    await handle(actionIdentifier: actionIdentifier, selectedDeviceUID: selectedDeviceUID)
-  }
-
-  private func handle(actionIdentifier: String, selectedDeviceUID: String?) {
     guard let fixer else { return }
-    switch actionIdentifier {
+    switch response.actionIdentifier {
     case Action.setAsForcedInput:
+      let selectedDeviceUID = response.notification.request.content.userInfo[Self.selectedDeviceUIDKey] as? String
       guard let selectedDeviceUID, fixer.select(uid: selectedDeviceUID) else {
         notifyDeviceUnavailable()
         return
