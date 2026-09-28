@@ -11,6 +11,8 @@ private let logger = Logger(subsystem: "com.milgra.asqf", category: "InputFixer"
 @MainActor
 @Observable
 public final class InputFixer {
+  /// Connected input devices: the built-in microphone first, then the rest by name in Finder order,
+  /// which ignores case and compares embedded numbers by value.
   public private(set) var devices: [AudioDevice] = []
   public private(set) var forcedDevice: AudioDevice?
   /// The device the last forcing attempt could not make the default input.
@@ -115,7 +117,7 @@ public final class InputFixer {
   }
 
   private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
-    devices = hardware.inputDevices()
+    devices = Self.sorted(hardware.inputDevices())
     forcedDevice = Self.deviceToForce(in: devices, preferredUIDs: isPriorityEnabled ? priorityUIDs : fixedUID.map { [$0] } ?? [])
     guard !isPaused, let forcedDevice, hardware.defaultInputDeviceID() != forcedDevice.deviceID else {
       failedDevice = nil
@@ -151,6 +153,19 @@ public final class InputFixer {
       if let device = devices.first(where: { $0.uid == uid }) { return device }
     }
     return fallbackDevice(in: devices)
+  }
+
+  /// macOS lists input devices in a different order in System Settings, the Sound menu, and
+  /// CoreAudio, so the fixer defines its own. The UID breaks ties between devices with equal names.
+  static func sorted(_ devices: [AudioDevice]) -> [AudioDevice] {
+    devices.sorted { lhs, rhs in
+      if lhs.isBuiltIn != rhs.isBuiltIn { return lhs.isBuiltIn }
+      switch lhs.name.localizedStandardCompare(rhs.name) {
+      case .orderedAscending: return true
+      case .orderedDescending: return false
+      case .orderedSame: return lhs.uid < rhs.uid
+      }
+    }
   }
 
   static func fallbackDevice(in devices: [AudioDevice]) -> AudioDevice? {

@@ -10,7 +10,7 @@ struct MenuContent: View {
   var body: some View {
     Toggle("Pause", isOn: $fixer.isPaused)
     Divider()
-    Picker("Force input:", selection: forcedDeviceUID) {
+    Picker("Force input to:", selection: forcedDeviceUID) {
       ForEach(fixer.devices) { device in
         Text(device.name).tag(Optional(device.uid))
       }

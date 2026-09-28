@@ -306,6 +306,20 @@ struct InputFixerTests {
     expectNoDifference(fixer.forcedDevice, .interface)
   }
 
+  @Test func listsBuiltInMicrophoneFirstAndOthersAlphabetically() {
+    let lowercase = AudioDevice(deviceID: 140, uid: "Lowercase", name: "blackHole 2ch", isBuiltIn: false)
+    let numbered = AudioDevice(deviceID: 141, uid: "Numbered", name: "USB Interface 10", isBuiltIn: false)
+    let hardware = FakeAudioHardware(
+      devices: [numbered, .airPods, .interface, .builtIn, lowercase],
+      defaultInput: AudioDevice.builtIn.deviceID
+    )
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+
+    fixer.start()
+
+    expectNoDifference(fixer.devices, [.builtIn, .airPods, lowercase, .interface, numbered])
+  }
+
   @Test func reportsDeviceThatCannotBecomeDefaultInput() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.airPods.deviceID)
     hardware.rejectedDeviceIDs = [AudioDevice.interface.deviceID]
