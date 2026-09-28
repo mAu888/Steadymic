@@ -23,7 +23,7 @@ struct AirPodsSoundQualityFixerApp: App {
     MenuBarExtra(isInserted: $isIconVisible) {
       MenuContent(fixer: fixer, isIconVisible: $isIconVisible)
     } label: {
-      Image(.menuBarIcon)
+      Image(nsImage: Self.menuBarIcon(isPaused: fixer.isPaused))
         .help("AirPods Audio Quality & Battery Life Fixer")
     }
 
@@ -31,6 +31,17 @@ struct AirPodsSoundQualityFixerApp: App {
       AdvancedPriorityView(fixer: fixer)
     }
     .windowResizability(.contentSize)
+  }
+
+  /// MenuBarExtra ignores image modifiers such as `imageScale` on its label, so the size is part of
+  /// the NSImage's symbol configuration. At the default size the circle is 3 pt smaller than the
+  /// system's own circular status items.
+  private static func menuBarIcon(isPaused: Bool) -> NSImage {
+    let image = NSImage(
+      systemSymbolName: isPaused ? "headphones.circle" : "headphones.circle.fill",
+      accessibilityDescription: isPaused ? "AirPods Sound Quality Fixer, paused" : "AirPods Sound Quality Fixer"
+    )!
+    return image.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)) ?? image
   }
 }
 
