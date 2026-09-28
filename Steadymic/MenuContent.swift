@@ -65,12 +65,12 @@ struct MenuContent: View {
 
   private static func confirmHide() -> Bool {
     let alert = NSAlert()
-    alert.messageText = "Hide the Menu Bar Icon?"
-    alert.informativeText =
-      "Steadymic keeps running. To show the icon again, open Steadymic from the "
-      + "Applications folder."
-    alert.addButton(withTitle: "Hide")
-    alert.addButton(withTitle: "Cancel")
+    alert.messageText = String(localized: "Hide the Menu Bar Icon?")
+    alert.informativeText = String(
+      localized: "Steadymic keeps running. To show the icon again, open Steadymic from the Applications folder."
+    )
+    alert.addButton(withTitle: String(localized: "Hide"))
+    alert.addButton(withTitle: String(localized: "Cancel"))
     // An app with no Dock icon stays inactive while its menu is open, so without activation the
     // alert cannot become key and does not receive Return or Escape.
     NSApp.activate()

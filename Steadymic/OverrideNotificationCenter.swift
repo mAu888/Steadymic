@@ -34,8 +34,8 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
       UNNotificationCategory(
         identifier: Action.category,
         actions: [
-          UNNotificationAction(identifier: Action.setAsForcedInput, title: "Set as Forced Input", options: []),
-          UNNotificationAction(identifier: Action.pause, title: "Pause Steadymic", options: []),
+          UNNotificationAction(identifier: Action.setAsForcedInput, title: String(localized: "Set as Forced Input"), options: []),
+          UNNotificationAction(identifier: Action.pause, title: String(localized: "Pause Steadymic"), options: []),
         ],
         intentIdentifiers: []
       )
@@ -44,10 +44,13 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
 
   func notifyOverride(selectedDevice: AudioDevice, forcedDevice: AudioDevice) {
     let content = UNMutableNotificationContent()
-    content.title = "Input Switched Back to \(forcedDevice.name)"
-    content.body =
-      "You selected \(selectedDevice.name), but Steadymic switched the input back. "
-      + "\"Set as Forced Input\" makes \(selectedDevice.name) the new pinned input instead."
+    content.title = String(localized: "Input Switched Back to \(forcedDevice.name)")
+    content.body = String(
+      localized: """
+        You selected \(selectedDevice.name), but Steadymic switched the input back. \
+        “Set as Forced Input” makes \(selectedDevice.name) the new pinned input instead.
+        """
+    )
     content.categoryIdentifier = Action.category
     content.userInfo = [Self.selectedDeviceUIDKey: selectedDevice.uid]
     post(content)
@@ -55,8 +58,10 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
 
   private func notifyDeviceUnavailable() {
     let content = UNMutableNotificationContent()
-    content.title = "Device No Longer Available"
-    content.body = "The input you selected is no longer connected, so it could not be set as the forced input."
+    content.title = String(localized: "Device No Longer Available")
+    content.body = String(
+      localized: "The input you selected is no longer connected, so it could not be set as the forced input."
+    )
     post(content)
   }
 

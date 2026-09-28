@@ -17,7 +17,7 @@ struct AdvancedPriorityView: View {
         .font(.headline)
       Text(
         """
-        The fixer forces the default input to the first connected device below, falling back to \
+        Steadymic forces the default input to the first connected device below, falling back to \
         the built-in microphone when none of them are connected. Choosing a single input from \
         the menu turns the chain off and keeps this list.
         """
