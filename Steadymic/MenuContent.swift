@@ -38,6 +38,7 @@ struct MenuContent: View {
     Button("Quit") {
       NSApplication.shared.terminate(nil)
     }
+    .keyboardShortcut("q")
   }
 
   /// `Advanced…` carries the checkmark instead of a device while the fallback chain is enabled,
@@ -66,7 +67,7 @@ struct MenuContent: View {
     let alert = NSAlert()
     alert.messageText = "Hide the Menu Bar Icon?"
     alert.informativeText =
-      "The fixer keeps running. To show the icon again, open AirPods Sound Quality Fixer from the "
+      "Steadymic keeps running. To show the icon again, open Steadymic from the "
       + "Applications folder."
     alert.addButton(withTitle: "Hide")
     alert.addButton(withTitle: "Cancel")

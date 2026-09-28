@@ -1,9 +1,9 @@
-# AirPods Sound Quality Fixer And Battery Life Enhancer For MacOS
+# Steadymic
 
-Fixes sound quality drops when using AirPods with Macs. 
-It forces the default audio input to be the built-in microphone instead of AirPods' microphone so MacOS doesn't have to mix down the output. 
-It also increases battery life because AirPods doesn't have to broadcast sound back.
-If you have more input devices you can select which device you want to force over the AirPods microphone.
+Keeps the default audio input on a microphone of your choice when macOS switches the output to a headset with a microphone, such as AirPods or other Bluetooth headphones.
+When macOS also switches the input to the headset's microphone, the Bluetooth connection drops to a low-quality call codec for playback.
+Keeping the input on another device, such as the built-in microphone, keeps playback at full quality and saves headset battery, because the headset does not send audio back.
+You can pick the forced input device, or define an ordered fallback chain of preferred input devices.
 
 The app runs in the menu bar.
 
@@ -13,7 +13,7 @@ Download the compiled application from [releases](https://github.com/milgra/airp
 
 Requires macOS 14 or later.
 
-Open `AirPodsSoundQualityFixerWorkspace.xcworkspace`, not the `.xcodeproj`.
-The workspace contains the app target and the `AirPodsSoundQualityFixerPackage` Swift package, which holds the CoreAudio and device-forcing logic.
+Open `Steadymic.xcworkspace`, not the `.xcodeproj`.
+The workspace contains the app target and the `SteadymicPackage` Swift package, which holds the CoreAudio and device-forcing logic.
 
-Run the tests with ⌘U in Xcode or `swift test` in `AirPodsSoundQualityFixerPackage`.
+Run the tests with ⌘U in Xcode or `swift test` in `SteadymicPackage`.

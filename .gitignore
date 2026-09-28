@@ -61,8 +61,8 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
-AirPods Sound Quality Fixer.xcodeproj/project.xcworkspace/
-AirPods Sound Quality Fixer.xcodeproj/xcshareddata/
+Steadymic.xcodeproj/project.xcworkspace/
+Steadymic.xcodeproj/xcshareddata/
 
 ## macOS
 .DS_Store

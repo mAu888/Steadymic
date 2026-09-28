@@ -3,7 +3,7 @@ import AudioInputFixer
 import SwiftUI
 
 @main
-struct AirPodsSoundQualityFixerApp: App {
+struct SteadymicApp: App {
   @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
   @State private var fixer: InputFixer
   @AppStorage(DefaultsKeys.isIconVisible) private var isIconVisible = true
@@ -38,31 +38,27 @@ struct AirPodsSoundQualityFixerApp: App {
   }
 
   private static let activeIcon = menuBarIcon(
-    "headphones.circle.fill", description: String(localized: "AirPods Sound Quality Fixer")
+    "microphone.fill", description: String(localized: "Steadymic")
   )
   private static let inactiveIcon = menuBarIcon(
-    "headphones.circle", description: String(localized: "AirPods Sound Quality Fixer, not forcing an input")
+    "microphone", description: String(localized: "Steadymic, not forcing an input")
   )
 
   private static func status(of fixer: InputFixer) -> LocalizedStringResource {
     if fixer.isPaused {
-      return "AirPods Sound Quality Fixer is paused"
+      return "Steadymic is paused"
     }
     if let failedDevice = fixer.failedDevice {
-      return "AirPods Sound Quality Fixer could not switch the input to \(failedDevice.name)"
+      return "Steadymic could not switch the input to \(failedDevice.name)"
     }
     guard let forcedDevice = fixer.forcedDevice else {
-      return "AirPods Sound Quality Fixer has no connected input to force"
+      return "Steadymic has no connected input to force"
     }
-    return "AirPods Sound Quality Fixer is forcing the input to \(forcedDevice.name)"
+    return "Steadymic is forcing the input to \(forcedDevice.name)"
   }
 
-  /// MenuBarExtra ignores image modifiers such as `imageScale` on its label, so the size is part of
-  /// the NSImage's symbol configuration. At the default size the circle is 3 pt smaller than the
-  /// system's own circular status items.
   private static func menuBarIcon(_ symbolName: String, description: String) -> NSImage {
-    let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: description)!
-    return image.withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)) ?? image
+    NSImage(systemSymbolName: symbolName, accessibilityDescription: description)!
   }
 }
 

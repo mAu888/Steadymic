@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "AirPodsSoundQualityFixerPackage",
+  name: "SteadymicPackage",
   platforms: [
     .macOS(.v14),
   ],

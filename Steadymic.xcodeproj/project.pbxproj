@@ -11,13 +11,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A1F0000000000000000000C1 /* AirPods Sound Quality Fixer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "AirPods Sound Quality Fixer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1F0000000000000000000C1 /* Steadymic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Steadymic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A1F0000000000000000000D1 /* AirPods Sound Quality Fixer */ = {
+		A1F0000000000000000000D1 /* Steadymic */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "AirPods Sound Quality Fixer";
+			path = Steadymic;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,7 +37,7 @@
 		A1F0000000000000000000F1 = {
 			isa = PBXGroup;
 			children = (
-				A1F0000000000000000000D1 /* AirPods Sound Quality Fixer */,
+				A1F0000000000000000000D1 /* Steadymic */,
 				A1F0000000000000000000F2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -45,7 +45,7 @@
 		A1F0000000000000000000F2 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A1F0000000000000000000C1 /* AirPods Sound Quality Fixer.app */,
+				A1F0000000000000000000C1 /* Steadymic.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,9 +53,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1F000000000000000000101 /* AirPods Sound Quality Fixer */ = {
+		A1F000000000000000000101 /* Steadymic */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1F000000000000000000401 /* Build configuration list for PBXNativeTarget "AirPods Sound Quality Fixer" */;
+			buildConfigurationList = A1F000000000000000000401 /* Build configuration list for PBXNativeTarget "Steadymic" */;
 			buildPhases = (
 				A1F000000000000000000201 /* Sources */,
 				A1F0000000000000000000E1 /* Frameworks */,
@@ -66,14 +66,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A1F0000000000000000000D1 /* AirPods Sound Quality Fixer */,
+				A1F0000000000000000000D1 /* Steadymic */,
 			);
-			name = "AirPods Sound Quality Fixer";
+			name = Steadymic;
 			packageProductDependencies = (
 				A1F0000000000000000000B1 /* AudioInputFixer */,
 			);
-			productName = "AirPods Sound Quality Fixer";
-			productReference = A1F0000000000000000000C1 /* AirPods Sound Quality Fixer.app */;
+			productName = Steadymic;
+			productReference = A1F0000000000000000000C1 /* Steadymic.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -86,7 +86,7 @@
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 			};
-			buildConfigurationList = A1F000000000000000000402 /* Build configuration list for PBXProject "AirPods Sound Quality Fixer" */;
+			buildConfigurationList = A1F000000000000000000402 /* Build configuration list for PBXProject "Steadymic" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -100,7 +100,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A1F000000000000000000101 /* AirPods Sound Quality Fixer */,
+				A1F000000000000000000101 /* Steadymic */,
 			);
 		};
 /* End PBXProject section */
@@ -224,7 +224,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1F000000000000000000401 /* Build configuration list for PBXNativeTarget "AirPods Sound Quality Fixer" */ = {
+		A1F000000000000000000401 /* Build configuration list for PBXNativeTarget "Steadymic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1F000000000000000000503 /* Debug */,
@@ -233,7 +233,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1F000000000000000000402 /* Build configuration list for PBXProject "AirPods Sound Quality Fixer" */ = {
+		A1F000000000000000000402 /* Build configuration list for PBXProject "Steadymic" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1F000000000000000000501 /* Debug */,

@@ -35,7 +35,7 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
         identifier: Action.category,
         actions: [
           UNNotificationAction(identifier: Action.setAsForcedInput, title: "Set as Forced Input", options: []),
-          UNNotificationAction(identifier: Action.pause, title: "Pause Fixer", options: []),
+          UNNotificationAction(identifier: Action.pause, title: "Pause Steadymic", options: []),
         ],
         intentIdentifiers: []
       )
@@ -46,7 +46,7 @@ final class OverrideNotificationCenter: NSObject, OverrideNotifier, UNUserNotifi
     let content = UNMutableNotificationContent()
     content.title = "Input Switched Back to \(forcedDevice.name)"
     content.body =
-      "You selected \(selectedDevice.name), but AirPods Sound Quality Fixer switched the input back. "
+      "You selected \(selectedDevice.name), but Steadymic switched the input back. "
       + "\"Set as Forced Input\" makes \(selectedDevice.name) the new pinned input instead."
     content.categoryIdentifier = Action.category
     content.userInfo = [Self.selectedDeviceUIDKey: selectedDevice.uid]
