@@ -36,7 +36,7 @@ final class FakeAudioHardware: AudioHardware {
 }
 
 extension AudioDevice {
-  static let builtIn = AudioDevice(id: 117, uid: "BuiltInMicrophoneDevice", name: "MacBook Pro Microphone", isBuiltIn: true)
-  static let airPods = AudioDevice(id: 130, uid: "AA-BB-CC:input", name: "AirPods Pro", isBuiltIn: false)
-  static let interface = AudioDevice(id: 62, uid: "USBInterface", name: "USB Interface", isBuiltIn: false)
+  static let builtIn = AudioDevice(deviceID: 117, uid: "BuiltInMicrophoneDevice", name: "MacBook Pro Microphone", isBuiltIn: true)
+  static let airPods = AudioDevice(deviceID: 130, uid: "AA-BB-CC:input", name: "AirPods Pro", isBuiltIn: false)
+  static let interface = AudioDevice(deviceID: 62, uid: "USBInterface", name: "USB Interface", isBuiltIn: false)
 }

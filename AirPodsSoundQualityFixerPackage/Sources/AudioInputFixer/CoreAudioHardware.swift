@@ -91,7 +91,7 @@ public struct CoreAudioHardware: AudioHardware {
     AudioObjectGetPropertyData(id, &address, 0, nil, &size, &transportType)
 
     return AudioDevice(
-      id: id, uid: uid, name: name, isBuiltIn: transportType == kAudioDeviceTransportTypeBuiltIn
+      deviceID: id, uid: uid, name: name, isBuiltIn: transportType == kAudioDeviceTransportTypeBuiltIn
     )
   }
 

@@ -1,14 +1,17 @@
 import CoreAudio
 
 public struct AudioDevice: Equatable, Identifiable, Sendable {
-  public let id: AudioDeviceID
-  /// Stable across reboots and reconnects, unlike `id`.
+  /// The CoreAudio object ID, which can change across reconnects and reboots.
+  public let deviceID: AudioDeviceID
+  /// Stable across reboots and reconnects, unlike `deviceID`.
   public let uid: String
   public let name: String
   public let isBuiltIn: Bool
 
-  public init(id: AudioDeviceID, uid: String, name: String, isBuiltIn: Bool) {
-    self.id = id
+  public var id: String { uid }
+
+  public init(deviceID: AudioDeviceID, uid: String, name: String, isBuiltIn: Bool) {
+    self.deviceID = deviceID
     self.uid = uid
     self.name = name
     self.isBuiltIn = isBuiltIn

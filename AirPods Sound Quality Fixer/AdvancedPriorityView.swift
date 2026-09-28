@@ -25,9 +25,7 @@ struct AdvancedPriorityView: View {
 
       VStack(spacing: 0) {
         List(selection: $selection) {
-          // Identified by `uid`, not the default `Identifiable.id` (`AudioDeviceID`), which can
-          // change across reconnects and would desync row identity from the selection above.
-          ForEach(priorityDevices, id: \.uid) { device in
+          ForEach(priorityDevices) { device in
             Text(device.name)
               // Without this, only the text's glyph bounds are hit-tested, not the full row width.
               .contentShape(Rectangle())
@@ -61,7 +59,7 @@ struct AdvancedPriorityView: View {
   private var addRemoveControl: some View {
     HStack(spacing: 0) {
       Menu {
-        ForEach(availableDevices, id: \.uid) { device in
+        ForEach(availableDevices) { device in
           Button(device.name) {
             fixer.appendToPriority(uid: device.uid)
           }

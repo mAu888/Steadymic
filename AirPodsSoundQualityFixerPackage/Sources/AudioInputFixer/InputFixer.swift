@@ -100,7 +100,7 @@ public final class InputFixer {
   /// device list didn't) from a device connect/disconnect.
   private func handleExternalChange() {
     let selectedDefaultUID = hardware.defaultInputDeviceID().flatMap { id in
-      devices.first(where: { $0.id == id })?.uid
+      devices.first(where: { $0.deviceID == id })?.uid
     }
     refresh(before: (deviceUIDs: Set(devices.map(\.uid)), defaultUID: selectedDefaultUID))
   }
@@ -108,11 +108,11 @@ public final class InputFixer {
   private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
     devices = hardware.inputDevices()
     forcedDevice = Self.deviceToForce(in: devices, preferredUIDs: isPriorityEnabled ? priorityUIDs : fixedUID.map { [$0] } ?? [])
-    guard !isPaused, let forcedDevice, hardware.defaultInputDeviceID() != forcedDevice.id else {
+    guard !isPaused, let forcedDevice, hardware.defaultInputDeviceID() != forcedDevice.deviceID else {
       failedDevice = nil
       return
     }
-    if hardware.setDefaultInputDevice(forcedDevice.id) {
+    if hardware.setDefaultInputDevice(forcedDevice.deviceID) {
       failedDevice = nil
       notifyOverrideIfNeeded(forcedDevice: forcedDevice, before: before)
     } else {
