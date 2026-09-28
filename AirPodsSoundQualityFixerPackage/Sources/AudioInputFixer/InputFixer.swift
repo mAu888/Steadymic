@@ -30,6 +30,11 @@ public final class InputFixer {
   public var isPaused = false {
     didSet { refresh() }
   }
+  /// Whether the default input is held on `forcedDevice`: the fixer is not paused, has a device to
+  /// force, and its last attempt to switch to that device succeeded.
+  public var isForcing: Bool {
+    !isPaused && forcedDevice != nil && failedDevice == nil
+  }
 
   @ObservationIgnored private let hardware: any AudioHardware
   @ObservationIgnored private let defaults: UserDefaults

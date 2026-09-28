@@ -20,6 +20,7 @@ struct InputFixerTests {
     fixer.start()
 
     expectNoDifference(fixer.forcedDevice, .builtIn)
+    expectNoDifference(fixer.isForcing, true)
     expectNoDifference(hardware.setDefaultInputCalls, [AudioDevice.builtIn.deviceID])
   }
 
@@ -170,9 +171,11 @@ struct InputFixerTests {
     hardware.defaultInput = AudioDevice.airPods.deviceID
     hardware.simulateChange()
     expectNoDifference(hardware.setDefaultInputCalls, [])
+    expectNoDifference(fixer.isForcing, false)
 
     fixer.isPaused = false
     expectNoDifference(hardware.setDefaultInputCalls, [AudioDevice.builtIn.deviceID])
+    expectNoDifference(fixer.isForcing, true)
   }
 
   @Test func doesNotForceWithoutBuiltInOrPreferredDevice() {
@@ -182,6 +185,7 @@ struct InputFixerTests {
     fixer.start()
 
     expectNoDifference(fixer.forcedDevice, nil)
+    expectNoDifference(fixer.isForcing, false)
     expectNoDifference(hardware.setDefaultInputCalls, [])
   }
 
@@ -299,9 +303,11 @@ struct InputFixerTests {
 
     fixer.select(uid: AudioDevice.interface.uid)
     expectNoDifference(fixer.failedDevice, .interface)
+    expectNoDifference(fixer.isForcing, false)
     expectNoDifference(hardware.defaultInput, AudioDevice.builtIn.deviceID)
 
     fixer.select(uid: AudioDevice.builtIn.uid)
     expectNoDifference(fixer.failedDevice, nil)
+    expectNoDifference(fixer.isForcing, true)
   }
 }
