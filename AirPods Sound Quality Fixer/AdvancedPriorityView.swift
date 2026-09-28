@@ -37,6 +37,9 @@ struct AdvancedPriorityView: View {
             uids.move(fromOffsets: indices, toOffset: newOffset)
             fixer.setPriority(uids)
           }
+          if let fallbackDevice {
+            fallbackRow(fallbackDevice)
+          }
         }
         .listStyle(.bordered)
         .alternatingRowBackgrounds()
@@ -49,9 +52,9 @@ struct AdvancedPriorityView: View {
     .padding()
     .frame(width: 380)
     .onAppear {
-      // A single device already forced, e.g. the built-in fallback with nothing configured yet,
-      // becomes the list's starting point instead of showing an empty list.
-      if fixer.priorityUIDs.isEmpty, let forcedDevice = fixer.forcedDevice {
+      // A fixed device becomes the list's starting point. The fallback row already shows the
+      // built-in microphone, so adding it here would only duplicate that row.
+      if fixer.priorityUIDs.isEmpty, let forcedDevice = fixer.forcedDevice, forcedDevice != fixer.fallbackDevice {
         fixer.appendToPriority(uid: forcedDevice.uid)
       }
       selection = selection.filter { uid in priorityDevices.contains { $0.uid == uid } }
@@ -95,6 +98,25 @@ struct AdvancedPriorityView: View {
     .padding(.horizontal, 4)
     .padding(.vertical, 3)
     .background(Color(nsColor: .controlBackgroundColor))
+  }
+
+  /// Sits outside the `ForEach`, so `onMove` neither drags it nor drops rows below it.
+  private func fallbackRow(_ device: AudioDevice) -> some View {
+    HStack {
+      Text(device.name)
+      Spacer()
+      Text("(default)")
+    }
+    .foregroundStyle(.secondary)
+    .contentShape(Rectangle())
+    .selectionDisabled()
+    .help("Used when no device above is connected. It cannot be moved or removed.")
+  }
+
+  /// `nil` when the user added the built-in microphone to the chain, since its row then already
+  /// marks where the chain ends.
+  private var fallbackDevice: AudioDevice? {
+    fixer.fallbackDevice.flatMap { device in fixer.priorityUIDs.contains(device.uid) ? nil : device }
   }
 
   private var priorityDevices: [AudioDevice] {

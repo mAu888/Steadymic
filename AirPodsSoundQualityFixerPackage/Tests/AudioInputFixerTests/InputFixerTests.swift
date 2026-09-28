@@ -189,6 +189,18 @@ struct InputFixerTests {
     expectNoDifference(hardware.setDefaultInputCalls, [])
   }
 
+  @Test func reportsBuiltInMicrophoneAsFallbackWhilePresent() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.deviceID)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    expectNoDifference(fixer.fallbackDevice, .builtIn)
+
+    hardware.devices = [.airPods]
+    hardware.simulateChange()
+
+    expectNoDifference(fixer.fallbackDevice, nil)
+  }
+
   @Test func notifiesWhenSoundMenuSelectionIsOverridden() {
     let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.deviceID)
     let fixer = InputFixer(hardware: hardware, defaults: defaults)

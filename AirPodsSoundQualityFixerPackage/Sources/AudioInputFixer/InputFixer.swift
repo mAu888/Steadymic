@@ -35,6 +35,10 @@ public final class InputFixer {
   public var isForcing: Bool {
     !isPaused && forcedDevice != nil && failedDevice == nil
   }
+  /// The device forced when no preferred device is connected: the built-in microphone, if present.
+  public var fallbackDevice: AudioDevice? {
+    Self.fallbackDevice(in: devices)
+  }
 
   @ObservationIgnored private let hardware: any AudioHardware
   @ObservationIgnored private let defaults: UserDefaults
@@ -146,7 +150,11 @@ public final class InputFixer {
     for uid in preferredUIDs {
       if let device = devices.first(where: { $0.uid == uid }) { return device }
     }
-    return devices.first(where: \.isBuiltIn)
+    return fallbackDevice(in: devices)
+  }
+
+  static func fallbackDevice(in devices: [AudioDevice]) -> AudioDevice? {
+    devices.first(where: \.isBuiltIn)
   }
 
   enum Keys {
