@@ -39,6 +39,12 @@ enum DefaultsKeys {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+  /// SwiftUI terminates an app with a `Window` scene once its last window closes, and closing the
+  /// menu bar menu counts as such a close.
+  func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    false
+  }
+
   /// Opening the app from Finder, Spotlight, or Launchpad while it runs is the only way to show a
   /// hidden menu bar icon again, since the app has no Dock icon or window.
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
