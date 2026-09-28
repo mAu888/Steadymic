@@ -36,7 +36,8 @@ struct AdvancedPriorityView: View {
             fixer.setPriority(uids)
           }
         }
-        .listStyle(.bordered(alternatesRowBackgrounds: true))
+        .listStyle(.bordered)
+        .alternatingRowBackgrounds()
         .frame(minHeight: 140)
 
         addRemoveControl
@@ -69,7 +70,8 @@ struct AdvancedPriorityView: View {
           .frame(width: 24, height: 16)
           .contentShape(Rectangle())
       }
-      .menuStyle(.borderlessButton)
+      .menuStyle(.button)
+      .buttonStyle(.borderless)
       .menuIndicator(.hidden)
       .disabled(availableDevices.isEmpty)
 
