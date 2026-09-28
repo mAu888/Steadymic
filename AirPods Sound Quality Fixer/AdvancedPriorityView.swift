@@ -16,9 +16,11 @@ struct AdvancedPriorityView: View {
       Toggle("Use a fallback chain", isOn: $fixer.isPriorityEnabled)
         .font(.headline)
       Text(
-        "The fixer forces the default input to the first connected device below, falling back to "
-          + "the built-in microphone when none of them are connected. Choosing a single input from "
-          + "the menu turns the chain off and keeps this list."
+        """
+        The fixer forces the default input to the first connected device below, falling back to \
+        the built-in microphone when none of them are connected. Choosing a single input from \
+        the menu turns the chain off and keeps this list.
+        """
       )
       .font(.subheadline)
       .foregroundStyle(.secondary)
