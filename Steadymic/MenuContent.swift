@@ -22,12 +22,14 @@ struct MenuContent: View {
     Toggle(isOn: advancedIsActive) {
       Text("Advanced…")
     }
+    .keyboardShortcut(",", modifiers: [.command, .option])
     Divider()
     Button("Hide") {
       if Self.confirmHide() {
         isIconVisible = false
       }
     }
+    .keyboardShortcut("h")
     Button("Settings…") {
       // Without activation, the Settings window of an app with no Dock icon opens behind the
       // frontmost app's windows.
