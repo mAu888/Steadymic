@@ -409,6 +409,75 @@
         }
       }
     },
+    "No input to use until %@ reconnects" : {
+      "comment" : "Menu status line shown when the chosen device is disconnected and the Mac has no built-in microphone to fall back to.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Eingang verfügbar, bis %@ wieder verbunden ist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay ninguna entrada que usar hasta que %@ se vuelva a conectar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune entrée à utiliser jusqu’à la reconnexion de %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun ingresso da usare finché %@ non viene ricollegato"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhuma entrada para usar até %@ ser reconectado"
+          }
+        }
+      }
+    },
+    "Not connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht verbunden"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No conectado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non connecté"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non collegato"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não conectado"
+          }
+        }
+      }
+    },
     "Open at login" : {
       "localizations" : {
         "de" : {
@@ -987,6 +1056,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Usado quando nenhum dispositivo acima está conectado. Não pode ser movido nem removido."
+          }
+        }
+      }
+    },
+    "Using %@ until %@ reconnects" : {
+      "comment" : "Menu status line. The first argument is the device the input falls back to, the second the disconnected device the user chose.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wird verwendet, bis %2$@ wieder verbunden ist"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usando %1$@ hasta que %2$@ se vuelva a conectar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisation de %1$@ jusqu’à la reconnexion de %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In uso %1$@ finché %2$@ non viene ricollegato"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usando %1$@ até %2$@ ser reconectado"
           }
         }
       }

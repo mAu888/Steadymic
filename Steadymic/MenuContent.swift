@@ -10,12 +10,35 @@ struct MenuContent: View {
   var body: some View {
     Toggle("Pause", isOn: $fixer.isPaused)
     Divider()
-    Picker("Force input to:", selection: forcedDeviceUID) {
-      ForEach(fixer.devices) { device in
-        Text(device.name).tag(Optional(device.uid))
+    // Toggles instead of a `Picker`, whose menu rows ignore `disabled`. Symbols trail the names,
+    // since a leading one would indent its name past the other rows' names.
+    Section("Force input to:") {
+      ForEach(fixer.listedDevices) { device in
+        switch device {
+        case .connected(let device):
+          Toggle(isOn: isSelected(device.uid)) {
+            if device == standInDevice {
+              Text(device.name) + Text(" ") + Text(Image(systemName: "arrow.turn.down.left"))
+            } else {
+              Text(device.name)
+            }
+          }
+        case .disconnected(let device):
+          Toggle(isOn: isSelected(device.uid)) {
+            Text(device.name) + Text(" ") + Text(Image(systemName: "microphone.badge.xmark.fill"))
+          }
+          .disabled(true)
+          .help("Not connected")
+          if !fixer.isPaused {
+            if let standInDevice {
+              Text("Using \(standInDevice.name) until \(device.name) reconnects")
+            } else if fixer.forcedDevice == nil {
+              Text("No input to use until \(device.name) reconnects")
+            }
+          }
+        }
       }
     }
-    .pickerStyle(.inline)
     if let failedDevice = fixer.failedDevice {
       Text("Could not switch the input to \(failedDevice.name)")
     }
@@ -44,14 +67,18 @@ struct MenuContent: View {
   }
 
   /// `Advanced…` carries the checkmark instead of a device while the fallback chain is enabled,
-  /// since no single row could represent an ordered list.
-  private var forcedDeviceUID: Binding<String?> {
+  /// since no single row could represent an ordered list. A disconnected fixed device keeps the
+  /// checkmark over the fallback device the input is forced to meanwhile.
+  /// The device the input is held on while the fixed device is disconnected.
+  private var standInDevice: AudioDevice? {
+    fixer.disconnectedFixedDevice != nil && fixer.isForcing ? fixer.forcedDevice : nil
+  }
+
+  private func isSelected(_ uid: String) -> Binding<Bool> {
     Binding {
-      fixer.isPriorityEnabled ? nil : fixer.forcedDevice?.uid
-    } set: { uid in
-      if let uid {
-        fixer.select(uid: uid)
-      }
+      !fixer.isPriorityEnabled && (fixer.disconnectedFixedDevice?.uid ?? fixer.forcedDevice?.uid) == uid
+    } set: { _ in
+      fixer.select(uid: uid)
     }
   }
 

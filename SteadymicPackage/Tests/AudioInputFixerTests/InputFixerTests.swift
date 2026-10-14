@@ -336,4 +336,78 @@ struct InputFixerTests {
     expectNoDifference(fixer.failedDevice, nil)
     expectNoDifference(fixer.isForcing, true)
   }
+
+  @Test func listsDisconnectedFixedDeviceWhereItsNameSorts() {
+    let zoom = AudioDevice(deviceID: 150, uid: "Zoom", name: "Zoom H1", isBuiltIn: false)
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface, zoom], defaultInput: AudioDevice.builtIn.deviceID)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.interface.uid)
+
+    hardware.devices = [.airPods, .builtIn, zoom]
+    hardware.simulateChange()
+
+    let disconnected = DisconnectedDevice(uid: AudioDevice.interface.uid, name: AudioDevice.interface.name)
+    expectNoDifference(fixer.disconnectedFixedDevice, disconnected)
+    expectNoDifference(fixer.forcedDevice, .builtIn)
+    expectNoDifference(
+      fixer.listedDevices,
+      [.connected(.builtIn), .connected(.airPods), .disconnected(disconnected), .connected(zoom)]
+    )
+
+    hardware.devices = [.airPods, .builtIn, .interface, zoom]
+    hardware.simulateChange()
+
+    expectNoDifference(fixer.disconnectedFixedDevice, nil)
+    expectNoDifference(fixer.listedDevices.count, 4)
+  }
+
+  @Test func remembersDisconnectedFixedDeviceAcrossLaunches() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.deviceID)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.interface.uid)
+    hardware.devices = [.airPods, .builtIn]
+
+    let relaunched = InputFixer(hardware: hardware, defaults: defaults)
+    relaunched.start()
+
+    expectNoDifference(
+      relaunched.disconnectedFixedDevice,
+      DisconnectedDevice(uid: AudioDevice.interface.uid, name: AudioDevice.interface.name)
+    )
+  }
+
+  @Test func doesNotListDisconnectedFixedDeviceWhileChainIsEnabled() {
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn, .interface], defaultInput: AudioDevice.builtIn.deviceID)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    fixer.select(uid: AudioDevice.interface.uid)
+    hardware.devices = [.airPods, .builtIn]
+    hardware.simulateChange()
+
+    fixer.isPriorityEnabled = true
+
+    expectNoDifference(fixer.disconnectedFixedDevice, nil)
+    expectNoDifference(fixer.listedDevices, [.connected(.builtIn), .connected(.airPods)])
+  }
+
+  @Test func recordsNameOfFixedDeviceSavedWithoutOne() {
+    defaults.set(AudioDevice.interface.uid, forKey: "ForcedDeviceUID")
+    defaults.set(false, forKey: "PriorityEnabled")
+    let hardware = FakeAudioHardware(devices: [.airPods, .builtIn], defaultInput: AudioDevice.builtIn.deviceID)
+    let fixer = InputFixer(hardware: hardware, defaults: defaults)
+    fixer.start()
+    expectNoDifference(fixer.disconnectedFixedDevice, nil)
+
+    hardware.devices = [.airPods, .builtIn, .interface]
+    hardware.simulateChange()
+    hardware.devices = [.airPods, .builtIn]
+    hardware.simulateChange()
+
+    expectNoDifference(
+      fixer.disconnectedFixedDevice,
+      DisconnectedDevice(uid: AudioDevice.interface.uid, name: AudioDevice.interface.name)
+    )
+  }
 }

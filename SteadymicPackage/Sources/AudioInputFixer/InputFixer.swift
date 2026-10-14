@@ -19,9 +19,26 @@ public final class InputFixer {
   public private(set) var failedDevice: AudioDevice?
   /// The single device `select` fixes the input to while the fallback chain is disabled.
   public private(set) var fixedUID: String?
+  /// The fixed device while the fallback chain is disabled and the device is not connected, so that
+  /// the menu can still show it as the selection. `nil` when its name was never recorded, which is
+  /// the case for a device fixed by a build that did not record names and not connected since.
+  public private(set) var disconnectedFixedDevice: DisconnectedDevice?
   /// The fallback chain, most preferred first. Kept while the chain is disabled, so that the user
   /// can switch between a fixed device and the chain without reconfiguring it.
   public private(set) var priorityUIDs: [String]
+  /// `devices` with `disconnectedFixedDevice` inserted where its name sorts.
+  public var listedDevices: [ListedDevice] {
+    var listed = devices.map(ListedDevice.connected)
+    if let disconnectedFixedDevice {
+      let index = devices.firstIndex { device in
+        !device.isBuiltIn && Self.precedes(
+          (name: disconnectedFixedDevice.name, uid: disconnectedFixedDevice.uid), (name: device.name, uid: device.uid)
+        )
+      }
+      listed.insert(.disconnected(disconnectedFixedDevice), at: index ?? listed.endIndex)
+    }
+    return listed
+  }
   /// Whether the fixer forces from `priorityUIDs` instead of `fixedUID`.
   public var isPriorityEnabled: Bool {
     didSet {
@@ -42,6 +59,8 @@ public final class InputFixer {
     Self.fallbackDevice(in: devices)
   }
 
+  /// The last known name of the `fixedUID` device, which CoreAudio only reports while it is connected.
+  @ObservationIgnored private var fixedName: String?
   @ObservationIgnored private let hardware: any AudioHardware
   @ObservationIgnored private let defaults: UserDefaults
   @ObservationIgnored private var observation: AudioHardwareObservation?
@@ -52,6 +71,7 @@ public final class InputFixer {
     self.hardware = hardware
     self.defaults = defaults
     let priorityUIDs = defaults.array(forKey: Keys.priorityUIDs) as? [String] ?? []
+    fixedName = defaults.string(forKey: Keys.fixedName)
     self.priorityUIDs = priorityUIDs
     if let isPriorityEnabled = defaults.object(forKey: Keys.isPriorityEnabled) as? Bool {
       fixedUID = defaults.string(forKey: Keys.fixedUID)
@@ -77,6 +97,8 @@ public final class InputFixer {
     guard devices.contains(where: { $0.uid == uid }) else { return false }
     fixedUID = uid
     defaults.set(uid, forKey: Keys.fixedUID)
+    // Cleared so that `refresh` records the new device's name.
+    fixedName = nil
     if isPriorityEnabled {
       isPriorityEnabled = false
     } else {
@@ -118,6 +140,7 @@ public final class InputFixer {
 
   private func refresh(before: (deviceUIDs: Set<String>, defaultUID: String?)? = nil) {
     devices = Self.sorted(hardware.inputDevices())
+    updateFixedDevice()
     forcedDevice = Self.deviceToForce(in: devices, preferredUIDs: isPriorityEnabled ? priorityUIDs : fixedUID.map { [$0] } ?? [])
     guard !isPaused, let forcedDevice, hardware.defaultInputDeviceID() != forcedDevice.deviceID else {
       failedDevice = nil
@@ -129,6 +152,22 @@ public final class InputFixer {
     } else {
       failedDevice = forcedDevice
       logger.error("Could not make \(forcedDevice.name, privacy: .public) the default input")
+    }
+  }
+
+  private func updateFixedDevice() {
+    guard let fixedUID else {
+      disconnectedFixedDevice = nil
+      return
+    }
+    if let device = devices.first(where: { $0.uid == fixedUID }) {
+      disconnectedFixedDevice = nil
+      if fixedName != device.name {
+        fixedName = device.name
+        defaults.set(device.name, forKey: Keys.fixedName)
+      }
+    } else {
+      disconnectedFixedDevice = isPriorityEnabled ? nil : fixedName.map { DisconnectedDevice(uid: fixedUID, name: $0) }
     }
   }
 
@@ -160,11 +199,15 @@ public final class InputFixer {
   static func sorted(_ devices: [AudioDevice]) -> [AudioDevice] {
     devices.sorted { lhs, rhs in
       if lhs.isBuiltIn != rhs.isBuiltIn { return lhs.isBuiltIn }
-      switch lhs.name.localizedStandardCompare(rhs.name) {
-      case .orderedAscending: return true
-      case .orderedDescending: return false
-      case .orderedSame: return lhs.uid < rhs.uid
-      }
+      return precedes((name: lhs.name, uid: lhs.uid), (name: rhs.name, uid: rhs.uid))
+    }
+  }
+
+  private static func precedes(_ lhs: (name: String, uid: String), _ rhs: (name: String, uid: String)) -> Bool {
+    switch lhs.name.localizedStandardCompare(rhs.name) {
+    case .orderedAscending: true
+    case .orderedDescending: false
+    case .orderedSame: lhs.uid < rhs.uid
     }
   }
 
@@ -174,7 +217,42 @@ public final class InputFixer {
 
   enum Keys {
     static let fixedUID = "ForcedDeviceUID"
+    static let fixedName = "ForcedDeviceName"
     static let priorityUIDs = "PriorityDeviceUIDs"
     static let isPriorityEnabled = "PriorityEnabled"
+  }
+}
+
+/// A device the fixer remembers by UID and last known name while it is not connected.
+public struct DisconnectedDevice: Equatable, Identifiable, Sendable {
+  public let uid: String
+  public let name: String
+
+  public var id: String { uid }
+
+  public init(uid: String, name: String) {
+    self.uid = uid
+    self.name = name
+  }
+}
+
+public enum ListedDevice: Equatable, Identifiable, Sendable {
+  case connected(AudioDevice)
+  case disconnected(DisconnectedDevice)
+
+  public var id: String { uid }
+
+  public var uid: String {
+    switch self {
+    case .connected(let device): device.uid
+    case .disconnected(let device): device.uid
+    }
+  }
+
+  public var name: String {
+    switch self {
+    case .connected(let device): device.name
+    case .disconnected(let device): device.name
+    }
   }
 }
